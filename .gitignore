@@ -1,0 +1,29 @@
+# Ignore environment variables file
+.env
+
+# Ignore the ecommerce_template folder
+ecommerce_template/
+
+# Virtual environment
+env/
+
+# Python cache files
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Database files
+db.sqlite3
+
+# Django static and media files
+/static/
+/media/
+
+# Logs and temporary files
+*.log
+*.swp
+*.swo
+
+# VS Code settings
+.vscode/
