@@ -1,0 +1,25 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<section class="section-content padding-y bg">
+    <div class="container">
+        <main class="col-md-9 mx-auto">
+            <article class="card">
+                <header class="card-header">
+                    <h4 class="card-title">Order Placed Successfully!</h4>
+                </header>
+                <div class="card-body">
+                    <h5>Thank you for your order, {{ order.user.username }}!</h5>
+                    <p>Order ID: <strong>{{ order.order_id }}</strong></p>
+                    <p>Total Amount: <strong>Tk {{ order.total_amount }}</strong></p>
+                    <p>Shipping Address: <strong>{{ order.shipping_address }}</strong></p>
+                    <p>Phone Number: <strong>{{ order.phone_number }}</strong></p>
+                    <p>Payment Method: <strong>{{ order.transactions.first.payment_method }}</strong></p>
+                    <p>Status: <strong>{{ order.status }}</strong></p>
+                    <a href="{% url 'store' %}" class="btn btn-primary">Continue Shopping</a>
+                </div>
+            </article>
+        </main>
+    </div>
+</section>
+{% endblock %}

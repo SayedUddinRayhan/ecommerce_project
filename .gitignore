@@ -27,3 +27,8 @@ db.sqlite3
 
 # VS Code settings
 .vscode/
+
+
+ ecommerce_project/cart/views_backup.py
+ ecommerce_project/store/views_backup.py
+ ecommerce_project/accounts/views_backup.py

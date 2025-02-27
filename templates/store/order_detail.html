@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block content %}
+
+<section class="section-conten padding-y bg">
+<div class="container">
+	<main class="col-md-9 mx-auto">
+		<article class="card">
+			<header class="card-header">
+				<strong>Order ID: {{ order.order_id }}</strong>
+				<span class="float-right">Order Date: {{ order.created_at|date:"d M, Y" }}</span>
+			</header>
+
+			<div class="card-body">
+				<h6 class="text-muted">Delivery To</h6>
+				<p>{{ order.user.get_full_name }} <br>
+				Phone: {{ order.user.phone_number }} <br>
+				Email: {{ order.user.email }} <br>
+				Location: {{ order.address }}</p>
+			</div>
+
+			<!-- Order Items Table -->
+			<div class="table-responsive">
+				<table class="table table-hover">
+					<tr>
+						<th>Product</th>
+						<th>Quantity</th>
+						<th>Price</th>
+						<th>Total</th>
+					</tr>
+					{% for item in order_items %}
+					<tr>
+						<td>{{ item.product.product_name }}</td>
+						<td>{{ item.quantity }}</td>
+						<td>${{ item.product.price }}</td>
+						<td>${{ item.subtotal }}</td>
+					</tr>
+					{% endfor %}
+				</table>
+			</div>
+
+			<!-- Order Summary -->
+			<div class="card-body">
+				<h6 class="text-muted">Payment</h6>
+				<p>Subtotal: ${{ order.subtotal }} <br>
+				Shipping fee: ${{ order.shipping_fee }} <br>
+				<strong>Total: ${{ order.total_price }}</strong></p>
+			</div>
+		</article>
+	</main>
+</div>
+</section>
+
+{% endblock %}

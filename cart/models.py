@@ -1,11 +1,12 @@
 from django.db import models
 from store.models import Product, Variation
 from accounts.models import CustomUser
-
+from django.utils.timezone import now
 
 # Create your models here.
 
 class Cart(models.Model):
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, null=True)
     cart_id = models.CharField(max_length=250, blank=True)
     date_added = models.DateField(auto_now_add=True)
 
@@ -20,6 +21,7 @@ class CartItem(models.Model):
     cart    = models.ForeignKey(Cart, on_delete=models.CASCADE, null=True)
     quantity = models.IntegerField()
     is_active = models.BooleanField(default=True)
+    date_added = models.DateTimeField(default=now)
 
     def sub_total(self):
         return self.product.price * self.quantity

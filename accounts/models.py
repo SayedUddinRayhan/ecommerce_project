@@ -4,38 +4,40 @@ from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, Permis
 
 # Custom User Manager
 class CustomUserManager(BaseUserManager):
-    def create_user(self, first_name, last_name, username, email, password=None):
+    def create_user(self, first_name, last_name, username, email, phone_number, password=None):
         if not email:
             raise ValueError("The Email field must be set")
-        
+
         if not username:
             raise ValueError("The username field must be set")
-        
+
         user = self.model(
             email       = self.normalize_email(email),
             username    = username,
             first_name  = first_name,
             last_name   = last_name,
+            phone_number= phone_number,
         )
 
         user.set_password(password)
         user.save(using=self._db)
 
         return user
-    
+
     def create_superuser(self, first_name, last_name, username, email, password=None):
         user = self.create_user(
-            email       = self.normalize_email(email),
-            username    = username,
-            password    = password,
-            first_name  = first_name,
-            last_name   = last_name,
+            email=email,
+            username=username,
+            password=password,
+            first_name=first_name,
+            last_name=last_name,
+            phone_number="01886963010",
         )
 
-        user.is_admin       = True
-        user.is_active      = True
-        user.is_staff       = True
-        user.is_superadmin  = True
+        user.is_admin = True
+        user.is_active = True
+        user.is_staff = True
+        user.is_superadmin = True
         user.save(using=self._db)
 
         return user
@@ -66,10 +68,10 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
 
 
     def __str__(self):
-        return self.email
+        return self.username
 
     def has_perm(self, perm, obj = None):
         return self.is_admin
-    
+
     def has_module_perms(self, app_label):
         return True
