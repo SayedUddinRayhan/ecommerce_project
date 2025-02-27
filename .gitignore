@@ -1,10 +1,11 @@
 # Ignore environment variables file
 .env
 
-ecommerce_project/
+ecommerce_project/settings.py
+ecommerce_project/static/
 
 # Ignore the ecommerce_template folder
-ecommerce_template/settings.py
+ecommerce_template/
 
 # Virtual environment
 env/
