@@ -1,8 +1,10 @@
 # Ignore environment variables file
 .env
 
+ecommerce_project/
+
 # Ignore the ecommerce_template folder
-ecommerce_template/
+ecommerce_template/settings.py
 
 # Virtual environment
 env/
@@ -29,6 +31,6 @@ db.sqlite3
 .vscode/
 
 
- ecommerce_project/cart/views_backup.py
- ecommerce_project/store/views_backup.py
- ecommerce_project/accounts/views_backup.py
+ cart/views_backup.py
+ store/views_backup.py
+ accounts/views_backup.py
