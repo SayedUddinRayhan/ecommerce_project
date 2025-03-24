@@ -12,13 +12,13 @@
                  <a href="#" class="nav-link">   English </a>
 
             </li>
-            <li class="nav-item dropdown">
+            {% comment %} <li class="nav-item dropdown">
                 <a href="#" class="nav-link"> USD </a>
-            </li>
+            </li> {% endcomment %}
         </ul>
         <ul class="navbar-nav">
-            <li><a href="#" class="nav-link"> <i class="fa fa-envelope"></i> Email </a></li>
-            <li><a href="#" class="nav-link"> <i class="fa fa-phone"></i> Call us </a></li>
+            <li><a href="mailto:sayeduddin.fdh@gmail.com" class="nav-link"> <i class="fa fa-envelope"></i> Email </a></li>
+            <li><a href="tel:+8801XXXXXXXXX" class="nav-link"> <i class="fa fa-phone"></i> Call us </a></li>
         </ul> <!-- list-inline //  -->
       </div> <!-- navbar-collapse .// -->
     </div> <!-- container //  -->
@@ -38,9 +38,9 @@
                     <i class="fa fa-bars"></i> All category
                 </button>
                 <div class="dropdown-menu">
-                    <a class="dropdown-item" href="{% url 'store' %}">All Products</a>
+                    <a class="dropdown-item {% if request.path == '/store/' %}active{% endif %}" href="{% url 'store' %}">All Products</a>
                     {% for category in links %}
-                        <a class="dropdown-item" href="{% url 'category_products' category.slug %}">{{category.category_name }}</a>
+                        <a class="dropdown-item {% if request.path == category.get_absolute_url %}active{% endif %}" href="{% url 'category_products' category.slug %}">{{ category.category_name }}</a>
                     {% endfor %}
                 </div>
             </div>  <!-- category-wrap.// -->

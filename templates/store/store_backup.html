@@ -77,16 +77,15 @@
     <div class="filter-content collapse show" id="collapse_3">
         <div class="card-body">
             <form method="GET" class="price-slider-form">
-                <div class="mb-3">
-                    <label class="form-label">Min Price: <strong>Tk. {{ min_price|default:"0" }}</strong></label>
-                    <input type="range" name="min_price" min="0" max="5000" step="50" value="{{ min_price|default:'0' }}" class="form-range">
-                </div>
-                <div class="mb-3">
-                    <label class="form-label">Max Price: <strong>Tk. {{ max_price|default:"5000" }}</strong></label>
-                    <input type="range" name="max_price" min="0" max="5000" step="50" value="{{ max_price|default:'5000' }}" class="form-range">
+                <div class="slider-container">
+                    <label for="min_price">Min: Tk. <span id="min_price_display">{{ min_price|default:"0" }}</span></label>
+                    <input type="range" id="min_price" name="min_price" min="0" max="5000" step="10" value="{{ min_price|default:"0" }}" class="custom-slider" oninput="updatePriceDisplay()">
+
+                    <label for="max_price">Max: Tk. <span id="max_price_display">{{ max_price|default:"5000" }}</span></label>
+                    <input type="range" id="max_price" name="max_price" min="0" max="100000" step="50" value="{{ max_price|default:"5000" }}" class="custom-slider" oninput="updatePriceDisplay()">
                 </div>
 
-                <button type="submit" class="btn btn-primary w-100">Apply Filter</button>
+                <button type="submit" class="btn btn-primary mt-3 w-100">Apply Filter</button>
             </form>
         </div>
     </div>
@@ -125,6 +124,15 @@
                                 <span class="price">Tk. {{product.price}}</span>
                                 <del class="price-old">Tk. {{product.price}}</del>
                             </div> <!-- price-wrap.// -->
+                            <div class="rating-star">
+						<span>
+							<i class="fa{% if product.averageReview >= 0.5 and product.averageReview < 1 %}s fa-star-half-alt{% elif product.averageReview >= 1 %}s fa-star{% else %}r fa-star{% endif %}" aria-hidden="true"></i>
+							<i class="fa{% if product.averageReview >= 1.5 and product.averageReview < 2 %}s fa-star-half-alt{% elif product.averageReview >= 2 %}s fa-star{% else %}r fa-star{% endif %}" aria-hidden="true"></i>
+							<i class="fa{% if product.averageReview >= 2.5 and product.averageReview < 3 %}s fa-star-half-alt{% elif product.averageReview >= 3 %}s fa-star{% else %}r fa-star{% endif %}" aria-hidden="true"></i>
+							<i class="fa{% if product.averageReview >= 3.5 and product.averageReview < 4 %}s fa-star-half-alt{% elif product.averageReview >= 4 %}s fa-star{% else %}r fa-star{% endif %}" aria-hidden="true"></i>
+							<i class="fa{% if product.averageReview >= 4.5 and product.averageReview < 5 %}s fa-star-half-alt{% elif product.averageReview == 5 %}s fa-star{% else %}r fa-star{% endif %}" aria-hidden="true"></i>
+						</span>
+					</div>
                         </div>
                         <a href="{% url 'product_details' product.category.slug product.slug %}" class="btn btn-sm btn-outline-primary">View Details</a>
                     </figcaption>
@@ -200,4 +208,11 @@
 </section>
 <!-- ========================= SECTION CONTENT END// ========================= -->
 
+
+<script>
+    function updatePriceDisplay() {
+        document.getElementById('min_price_display').textContent = document.getElementById('min_price').value;
+        document.getElementById('max_price_display').textContent = document.getElementById('max_price').value;
+    }
+</script>
 {% endblock %}

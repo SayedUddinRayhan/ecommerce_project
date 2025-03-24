@@ -17,7 +17,7 @@ class Cart(models.Model):
 class CartItem(models.Model):
     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, null=True)
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
-    variations = models.ManyToManyField(Variation, blank=True)
+    variations = models.ManyToManyField(Variation, blank=True) 
     cart    = models.ForeignKey(Cart, on_delete=models.CASCADE, null=True)
     quantity = models.IntegerField()
     is_active = models.BooleanField(default=True)
@@ -28,3 +28,8 @@ class CartItem(models.Model):
 
     def __str__(self):
         return f"{self.product.product_name} - {', '.join([str(v) for v in self.variations.all()])}"
+    
+    def save(self, *args, **kwargs):
+        if self.quantity > self.product.stock:
+            raise ValueError(f"Cannot add {self.quantity} items. Only {self.product.stock} left in stock.")
+        super().save(*args, **kwargs)

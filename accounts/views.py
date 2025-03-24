@@ -6,11 +6,9 @@ from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.utils.encoding import force_bytes, force_str
 from django.template.loader import render_to_string
 from django.core.mail import EmailMessage, send_mail
-from .models import CustomUser
-from store.models import Order
+from .models import CustomUser, AdminLoginAttempt
 from .tokens import account_activation_token
 from django.contrib.auth.decorators import login_required
-from store.models import Product, Variation
 from cart.models import CartItem
 from cart.views import _cart_id, Cart, CartItem
 from django.contrib.auth.signals import user_logged_in
@@ -18,6 +16,10 @@ from django.dispatch import receiver
 from django.contrib.auth import get_user_model
 from django.contrib.auth.tokens import default_token_generator
 from django.core.mail import EmailMultiAlternatives
+from .forms import ProfileEditForm
+from django.contrib.auth.forms import PasswordChangeForm
+from django.contrib.auth import update_session_auth_hash
+from django.http import HttpResponseForbidden
 
 
 # Register (Sign Up)
@@ -111,7 +113,12 @@ def custom_login(request):
                 # Delete the guest cart
                 guest_cart.delete()
 
-            return redirect("cart")  # Redirect to cart after login
+              # 🔹 Check if the logged-in user has any cart items
+            user_cart_items = CartItem.objects.filter(user=user).exists()
+            if user_cart_items:
+                return redirect("cart")
+            else:
+                return redirect("home")  # Redirect to home page if no cart items
         else:
             messages.error(request, "Invalid credentials")
             return redirect("login")
@@ -162,7 +169,7 @@ def forgot_password(request):
     if request.method == 'POST':
         email = request.POST['email']
         user = User.objects.filter(email=email).first()
-        
+
         if user:
             token = default_token_generator.make_token(user)
             uid = urlsafe_base64_encode(force_bytes(user.pk))
@@ -186,7 +193,7 @@ def forgot_password(request):
             return redirect('login')
         else:
             messages.error(request, "Email address not found.")
-    
+
     return render(request, 'accounts/forgot_password.html')
 
 
@@ -201,7 +208,7 @@ def reset_password(request, uidb64, token):
         if request.method == 'POST':
             new_password = request.POST['new_password']
             confirm_password = request.POST['confirm_password']
-            
+
             if new_password == confirm_password:
                 user.set_password(new_password)
                 user.save()
@@ -209,8 +216,61 @@ def reset_password(request, uidb64, token):
                 return redirect('login')
             else:
                 messages.error(request, "Passwords do not match.")
-        
+
         return render(request, 'accounts/reset_password.html')
     else:
         messages.error(request, "The reset link is invalid or has expired.")
         return redirect('forgot_password')
+
+
+
+
+@login_required
+def profile_edit(request):
+    user = request.user
+    if request.method == 'POST':
+        form = ProfileEditForm(request.POST, instance=user)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Your profile has been updated successfully.")
+            return redirect('dashboard')
+    else:
+        form = ProfileEditForm(instance=user)
+
+    return render(request, 'accounts/profile_edit.html', {'form': form})
+
+
+
+@login_required
+def password_change(request):
+    if request.method == 'POST':
+        form = PasswordChangeForm(request.user, request.POST)
+        if form.is_valid():
+            form.save()  # Save the new password
+            update_session_auth_hash(request, form.user)  # Keep the user logged in after changing the password
+            messages.success(request, "Your password has been updated successfully.")
+            return redirect('dashboard')  # Redirect to the dashboard after success
+        else:
+            messages.error(request, "Please correct the errors below.")  # Show errors if form is invalid
+    else:
+        form = PasswordChangeForm(request.user)
+
+    return render(request, 'accounts/password_change.html', {'form': form})
+
+
+
+def fake_admin_login(request):
+    """Fake admin login honeypot to catch unauthorized attempts"""
+    ip = get_client_ip(request)
+    AdminLoginAttempt.objects.create(username="UNKNOWN", ip_address=ip, status="HONEYPOT")
+
+    return HttpResponseForbidden("<h2>403 Forbidden</h2><p>You are not authorized to access this page.</p>")
+
+def get_client_ip(request):
+    """Extract client IP address from request headers."""
+    x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+    if x_forwarded_for:
+        ip = x_forwarded_for.split(',')[0]
+    else:
+        ip = request.META.get('REMOTE_ADDR')
+    return ip

@@ -8,37 +8,25 @@
 	<meta http-equiv="cache-control" content="max-age=604800" />
 	<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 
-	<title>ecommerce_project | One of the Biggest Online Shopping Platform</title>
+	<title>Cartex | One of the Biggest Online Shopping Platform</title>
 
-	<link href="{% static " images/favicon.ico" %}" rel="shortcut icon" type="image/x-icon">
+	<link href="{% static 'images/favicon.ico' %}" rel="shortcut icon" type="image/x-icon">
 
 	<!-- jQuery -->
 	<script src="{% static 'js/jquery-2.0.0.min.js' %}" type="text/javascript"></script>
 
-	<!-- Bootstrap4 files-->
+	<!-- Bootstrap -->
 	<script src="{% static 'js/bootstrap.bundle.min.js' %}" type="text/javascript"></script>
 	<link href="{% static 'css/bootstrap.css' %}" rel="stylesheet" type="text/css" />
 
-	<!-- Font awesome 5 -->
-	<link href="{% static 'fonts/fontawesome/css/all.min.css' %}" type="text/css" rel="stylesheet">
+	<!-- Font Awesome -->
+	{% comment %} <link href="{% static 'fonts/fontawesome/css/all.min.css' %}" type="text/css" rel="stylesheet"> {% endcomment %}
 
-	<!-- custom style -->
+	<!-- Custom Styles -->
 	<link href="{% static 'css/ui.css' %}" rel="stylesheet" type="text/css" />
 	<link href="{% static 'css/responsive.css' %}" rel="stylesheet" media="only screen and (max-width: 1200px)" />
-
-	<!-- custom javascript -->
-	<script src="{% static 'js/script.js' %}" type="text/javascript"></script>
-
-	<script type="text/javascript">
-		/// some script
-
-		// jquery ready start
-		$(document).ready(function () {
-			// jQuery code
-
-		});
-		// jquery end
-	</script>
+	<link href="{% static 'css/style.css' %}" rel="stylesheet" type="text/css" />
+	
 
 	<style>
     .slider-container {
@@ -65,21 +53,83 @@
         border-radius: 50%;
         cursor: pointer;
     }
-</style>
+
+	/* Print Styling */
+	@media print {
+		body * {
+			visibility: hidden;
+		}
+		#invoice-section, #invoice-section * {
+			visibility: visible;
+		}
+		#invoice-section {
+			position: absolute;
+			top: 0;
+			left: 0;
+			width: 100%;
+			height: 100%;
+			background: white;
+		}
+		.container {
+			margin: 0;
+			padding: 0;
+		}
+	}
+	</style>
 
 </head>
 
 <body>
 
+	<!-- Navbar -->
+	{% include 'includes/navbar.html' %}
+
+	<!-- Page Content -->
+	{% block content %}
+	{% endblock %}
+
+	<!-- Footer -->
+	{% include 'includes/footer.html' %}
+
+	<!-- JavaScript -->
+	<script>
+		document.addEventListener("DOMContentLoaded", function () {
+			var messageElements = document.querySelectorAll(".alert");
+
+			messageElements.forEach(function (element) {
+				setTimeout(function () {
+					element.style.display = "none";
+				}, 3000); // Hide after 3 seconds
+			});
+		});
+
+
+
+		document.addEventListener("DOMContentLoaded", function () {
+			document.querySelectorAll(".quantity-input").forEach(input => {
+				input.addEventListener("change", function () {
+					let stock = parseInt(this.dataset.stock);
+					let quantity = parseInt(this.value);
+
+					if (quantity > stock) {
+						this.value = stock;
+						this.style.border = "2px solid red";
+						this.style.backgroundColor = "#ffcccc";
+						setTimeout(() => {
+							this.style.border = "";
+							this.style.backgroundColor = "";
+						}, 2000);
+					}
+				});
+			});
+		});
+	</script>
+
+	{% block extra_js %}
+	
+	<script src="{% static 'js/script.js' %}" type="text/javascript"></script>
+	{% endblock %}
+
 </body>
 
 </html>
-<!-- navbar -->
-{% include 'includes/navbar.html' %}
-
-{% block content %}
-
-{% endblock %}
-
-<!-- footer -->
-{% include 'includes/footer.html' %}

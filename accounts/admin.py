@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
-from .models import CustomUser
+from .models import CustomUser, AdminLoginAttempt
 
 class AccountAdmin(UserAdmin):
     list_display = ('email', 'username', 'first_name', 'last_name', 'last_login', 'date_joined', 'is_active')
@@ -18,3 +18,10 @@ class AccountAdmin(UserAdmin):
 
 # Register only the User model
 admin.site.register(CustomUser, AccountAdmin)
+
+
+@admin.register(AdminLoginAttempt)
+class AdminLoginAttemptAdmin(admin.ModelAdmin):
+    list_display = ('username', 'ip_address', 'timestamp', 'status')
+    list_filter = ('status', 'timestamp')
+    search_fields = ('username', 'ip_address')

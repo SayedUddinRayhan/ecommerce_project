@@ -20,27 +20,45 @@
 
 <!-- ========================= SECTION  ========================= -->
 <section class="section-name padding-y-sm">
+
 <div class="container">
+	<header class="section-heading">
+		<a href="{% url 'store' %}" class="btn btn-outline-primary float-right">See all</a>
+		<h3 class="section-title">Popular products</h3>
+	</header><!-- sect-heading -->
 
-<header class="section-heading">
-	<a href="{% url 'store' %}" class="btn btn-outline-primary float-right">See all</a>
-	<h3 class="section-title">Popular products</h3>
-</header><!-- sect-heading -->
-
-
-<div class="row">
-	{% for i in prod %}
-		<div class="col-md-3">
-			<div class="card card-product-grid">
-				<a href="{% url 'product_details' category_slug=i.category.slug product_slug=i.slug %}" class="img-wrap"> <img src="{{i.image.url}}"> </a>
-				<figcaption class="info-wrap">
-					<a href="{% url 'product_details' category_slug=i.category.slug product_slug=i.slug %}" class="title">{{i.product_name}}</a>
-					<div class="price mt-1">Tk. {{i.price}}</div> <!-- price-wrap.// -->
-				</figcaption>
-			</div>
-		</div> <!-- col.// -->
-	{% endfor %}
-</div> <!-- row.// -->
+	
+	<div class="row">
+		{% for product in prod %}
+			<div class="col-md-3">
+				<div class="card card-product-grid">
+					<figure>
+						<a href="{% url 'product_details' category_slug=product.category.slug product_slug=product.slug %}" class="img-wrap">
+							<img src="{{product.image.url}}">
+						</a>
+						<figcaption class="info-wrap">
+							<div class="fix-height">
+								<a href="{% url 'product_details' product.category.slug product.slug %}" class="product-title">{{ product.product_name }}</a>
+								<div class="price-wrap mt-2">
+									<span class="price">Tk. {{ product.price }}</span>
+									<del class="price-old">Tk. {{ product.price }}</del>
+								</div>
+								<div class="rating-star">
+									<span>
+										<i class="fa{% if product.averageReview >= 0.5 and product.averageReview < 1 %}s fa-star-half-alt{% elif product.averageReview >= 1 %}s fa-star{% else %}r fa-star{% endif %}"></i>
+										<i class="fa{% if product.averageReview >= 1.5 and product.averageReview < 2 %}s fa-star-half-alt{% elif product.averageReview >= 2 %}s fa-star{% else %}r fa-star{% endif %}"></i>
+										<i class="fa{% if product.averageReview >= 2.5 and product.averageReview < 3 %}s fa-star-half-alt{% elif product.averageReview >= 3 %}s fa-star{% else %}r fa-star{% endif %}"></i>
+										<i class="fa{% if product.averageReview >= 3.5 and product.averageReview < 4 %}s fa-star-half-alt{% elif product.averageReview >= 4 %}s fa-star{% else %}r fa-star{% endif %}"></i>
+										<i class="fa{% if product.averageReview >= 4.5 and product.averageReview < 5 %}s fa-star-half-alt{% elif product.averageReview == 5 %}s fa-star{% else %}r fa-star{% endif %}"></i>
+									</span>
+								</div>
+							</div>
+						</figcaption>
+					</figure>
+				</div>
+			</div> <!-- col.// -->
+		{% endfor %}
+	</div> <!-- row.// -->
 
 </div><!-- container // -->
 </section>

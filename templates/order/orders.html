@@ -1,0 +1,99 @@
+{% extends "base.html" %}
+{% load static %}
+{% block content %}
+
+<section class="section-content padding-y bg">
+<div class="container">
+    <div class="row">
+        <aside class="col-md-3">
+            <ul class="list-group">
+                <a class="list-group-item {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}"
+                   href="{% url 'dashboard' %}"> Dashboard </a>
+
+                <a class="list-group-item {% if request.resolver_match.url_name == 'orders' %}active{% endif %}"
+                   href="{% url 'orders' %}"> My Orders </a>
+
+                <a class="list-group-item {% if request.resolver_match.url_name == 'profile_edit' %}active{% endif %}" href="{% url 'profile_edit' %}">Profile Edit</a>
+
+                <a class="list-group-item {% if request.resolver_match.url_name == 'password_change' %}active{% endif %}" href="{% url 'password_change' %}">Password Change</a>
+            </ul>
+            <br>
+            <a class="btn btn-light btn-block" href="{% url 'logout' %}">
+                <i class="fa fa-power-off"></i> <span class="text">Log out</span>
+            </a>
+        </aside>
+
+        <main class="col-md-9">
+            <article class="card">
+                <header class="card-header">
+                    <strong class="d-inline-block mr-3">My Orders</strong>
+                    <span>({{ orders.paginator.count }} orders found)</span>
+
+                    <!-- Order Status Filtering -->
+                    <form method="get" class="float-right">
+                        <select name="status" class="form-control d-inline w-auto" onchange="this.form.submit()">
+                            <option value="">All Statuses</option>
+                            <option value="Pending" {% if status == "Pending" %}selected{% endif %}>Pending</option>
+                            <option value="Shipped" {% if status == "Shipped" %}selected{% endif %}>Shipped</option>
+                            <option value="Delivered" {% if status == "Delivered" %}selected{% endif %}>Delivered</option>
+                        </select>
+                    </form>
+                </header>
+
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <tr>
+                            <th>Order ID</th>
+                            <th>Date</th>
+                            <th>Status</th>
+                            <th>Total</th>
+                            <th>Action</th>
+                        </tr>
+                        {% for order in orders %}
+                            <tr>
+                                <td>{{ order.order_id }}</td>
+                                <td>{{ order.created_at|date:"d M, Y" }}</td>
+                                <td>{{ order.status }}</td>
+                                <td>Tk. {{ order.grand_total|floatformat:2 }}</td>
+                                <td>
+                                    <a href="{% url 'order_details' order.order_id %}" class="btn btn-sm btn-primary">View</a>
+                                </td>
+                            </tr>
+                        {% empty %}
+                            <tr><td colspan="5" class="text-center">No orders found.</td></tr>
+                        {% endfor %}
+                    </table>
+                </div>
+
+               <!-- Pagination -->
+                <div class="pagination d-flex justify-content-center my-4">
+                    {% if orders.has_previous %}
+                        <a href="?page=1{% if status %}&status={{ status }}{% endif %}" class="btn btn-primary btn-sm mr-2">
+                            <i class="fa fa-angle-double-left"></i> First
+                        </a>
+                        <a href="?page={{ orders.previous_page_number }}{% if status %}&status={{ status }}{% endif %}" class="btn btn-primary btn-sm mr-2">
+                            <i class="fa fa-chevron-left"></i> Previous
+                        </a>
+                    {% endif %}
+
+                    <span class="mx-3 my-auto">
+                        Page {{ orders.number }} of {{ orders.paginator.num_pages }}
+                    </span>
+
+                    {% if orders.has_next %}
+                        <a href="?page={{ orders.next_page_number }}{% if status %}&status={{ status }}{% endif %}" class="btn btn-primary btn-sm ml-2">
+                            <i class="fa fa-chevron-right"></i> Next
+                        </a>
+                        <a href="?page={{ orders.paginator.num_pages }}{% if status %}&status={{ status }}{% endif %}" class="btn btn-primary btn-sm ml-2">
+                            <i class="fa fa-angle-double-right"></i> Last
+                        </a>
+                    {% endif %}
+                </div>
+
+            </article>
+        </main>
+    </div>
+</div>
+</section>
+
+{% endblock %}

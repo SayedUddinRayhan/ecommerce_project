@@ -1,19 +1,16 @@
-from django.shortcuts import render, redirect, get_object_or_404
-from .models import Product, Order, OrderItem, OrderTransaction
+from django.shortcuts import render, get_object_or_404, redirect
+from .models import Product, ReviewRating, ProductGallery
 from category.models import Category
 from cart.models import Cart, CartItem
 from cart.views import _cart_id
 from django.core.paginator import Paginator
-from django.db.models import Q
+from django.db.models import Q, Count
 from django.contrib.auth.decorators import login_required
+from order.models import Order, OrderItem
 from django.contrib import messages
-from django.utils import timezone
-from django.db import transaction
-from decimal import Decimal
-import random
-import string
-from django.utils.timezone import now
-from cart.views import merge_cart 
+from django.http import JsonResponse
+from .forms import ReviewForm
+import json
 
 def store(request, category_slug=None):
     products = Product.objects.filter(is_available=True).order_by('id')
@@ -68,167 +65,94 @@ def store(request, category_slug=None):
 
 
 def product_details(request, category_slug, product_slug):
-    category = get_object_or_404(Category, slug=category_slug)  # Fetch the category
-    product = get_object_or_404(Product, slug=product_slug, category=category)  # Fetch the product
+    category = get_object_or_404(Category, slug=category_slug)
+    product = get_object_or_404(Product, slug=product_slug, category=category)
+
     in_cart = False
     if request.user.is_authenticated:
         in_cart = CartItem.objects.filter(product=product, user=request.user).exists()
+        has_purchased = OrderItem.objects.filter(order__user=request.user, product=product).exists()
     else:
         cart = Cart.objects.filter(cart_id=_cart_id(request)).first()
         if cart:
             in_cart = CartItem.objects.filter(product=product, cart=cart).exists()
+        has_purchased = False
+
+
+    # Get the reviews
+    reviews = ReviewRating.objects.filter(product_id=product.id, status=True)
+
+    # Get the product gallery
+    product_gallery = ProductGallery.objects.filter(product_id=product.id)
 
     context = {
         'prod': product,
         'in_cart': in_cart,
+        'reviews': reviews,
+        'has_purchased': has_purchased,
+        'product_gallery': product_gallery,
     }
     return render(request, 'store/product_details.html', context)
 
 
+
 @login_required
 def dashboard(request):
-    """Dashboard - Displays all orders for logged-in users with pagination and filtering."""
-    status = request.GET.get('status')  # Filter orders by status (optional)
-    orders = Order.objects.filter(user=request.user).order_by('-created_at')
+    """User Dashboard - Displays summary and recent orders"""
+    user = request.user
+    orders = Order.objects.filter(user=user).order_by("-created_at")
 
-    if status:
-        orders = orders.filter(status=status)  # Apply filtering
+    total_orders = orders.count()
+    total_spent = sum(order.total_amount for order in orders)
 
-    paginator = Paginator(orders, 5)  # Show 5 orders per page
-    page_number = request.GET.get('page')
-    paged_orders = paginator.get_page(page_number)
+    # Order status breakdown for visualization
+    order_status_counts = orders.values('status').annotate(count=Count('status'))
+    order_status_data = {entry['status']: entry['count'] for entry in order_status_counts}
 
 
     context = {
-        'orders': paged_orders,
-        'status': status,
+        "user": user,
+        "total_orders": total_orders,
+        "total_spent": total_spent,
+        "order_status_data": json.dumps(order_status_data),
     }
-    return render(request, 'store/dashboard.html', context)
+    return render(request, "store/dashboard.html", context)
+
+
+
+def submit_review(request, product_id):
+    url = request.META.get('HTTP_REFERER', 'store')
+
+    if request.method == 'POST':
+        try:
+            reviews = ReviewRating.objects.get(user=request.user, product_id=product_id)
+            form = ReviewForm(request.POST, instance=reviews)
+        except ReviewRating.DoesNotExist:
+            form = ReviewForm(request.POST)
+
+        if form.is_valid():
+            data = form.save(commit=False)
+            data.product_id = product_id
+            data.user = request.user
+            data.ip = request.META.get('REMOTE_ADDR')
+            data.save()
+            messages.success(request, 'Thank you! Your review has been submitted.')
+        else:
+            messages.error(request, 'There was an error in your review submission.')
+
+        return redirect(url)
+
 
 @login_required
-def order_detail(request, order_id):
-    """Order Detail - Shows a specific order and its items."""
-    order = get_object_or_404(Order, order_id=order_id, user=request.user)
-    order_items = OrderItem.objects.filter(order=order)
+def like_review(request, review_id):
+    review = get_object_or_404(ReviewRating, id=review_id)
+    review.likes += 1
+    review.save()
+    return JsonResponse({'likes': review.likes})
 
-    context = {
-        'order': order,
-        'order_items': order_items,
-    }
-    return render(request, 'store/order_detail.html', context)
-
-
-@login_required(login_url='login')
-def checkout(request):
-    """Handles checkout process and merges guest cart items with user cart."""
-    
-    # 🔹 Merge guest cart with logged-in user's cart
-    merge_cart(request, request.user)
-
-    # 🔹 Fetch cart items after merging
-    cart_items = CartItem.objects.filter(user=request.user)
-
-    if not cart_items.exists():
-        messages.error(request, "Your cart is empty.")
-        return redirect('store')
-
-    total_price = sum(item.product.price * item.quantity for item in cart_items)
-
-    if request.method == "POST":
-        shipping_address = request.POST.get('shipping_address')
-        phone_number = request.POST.get('phone_number')
-        payment_method = request.POST.get('payment_method')
-
-        if not shipping_address or not phone_number:
-            messages.error(request, "Please provide both shipping address and phone number.")
-            return redirect('checkout')
-
-        # 🔹 Create order
-        order = Order.objects.create(
-            user=request.user,
-            total_amount=total_price,
-            shipping_address=shipping_address,
-            phone_number=phone_number,
-            status='pending',
-            order_id=f"{timezone.now().strftime('%Y%m%d%H%M%S')}_{request.user.id}",
-        )
-
-        # 🔹 Move cart items to order items
-        for cart_item in cart_items:
-            OrderItem.objects.create(
-                order=order,
-                product=cart_item.product,
-                quantity=cart_item.quantity,
-                price=cart_item.product.price,
-            )
-        
-        # 🔹 Clear cart after order placement
-        cart_items.delete()
-
-        messages.success(request, "Your order has been placed successfully!")
-        return redirect('order_detail', order_id=order.order_id)
-
-    return render(request, 'store/checkout.html', {'cart_items': cart_items, 'total_price': total_price})
-
-
-
-
-def generate_order_id():
-    return ''.join(random.choices(string.ascii_uppercase + string.digits, k=10))
-
-@login_required(login_url='login')
-def place_order(request):
-    current_user = request.user
-    cart_items = CartItem.objects.filter(user=current_user)
-
-    if not cart_items.exists():
-        messages.error(request, "Your cart is empty.")
-        return redirect('cart')
-
-    total_price = sum(item.product.price * item.quantity for item in cart_items)
-    
-    if request.method == 'POST':
-        shipping_address = request.POST.get('shipping_address')
-        phone_number = request.POST.get('phone_number')
-        payment_method = request.POST.get('payment_method')
-
-        order = Order.objects.create(
-            user=current_user,
-            order_id=generate_order_id(),
-            total_amount=total_price,
-            shipping_address=shipping_address,
-            billing_address=shipping_address,  # Assuming billing address is same as shipping
-            phone_number=phone_number,
-            status="pending",
-        )
-
-        for item in cart_items:
-            order_item = OrderItem.objects.create(
-                order=order,
-                product=item.product,
-                variation=item.variations.first() if item.variations.exists() else None,
-                quantity=item.quantity,
-                price=item.product.price
-            )
-
-        # Create transaction record
-        transaction = OrderTransaction.objects.create(
-            order=order,
-            transaction_id=f"TXN{random.randint(100000, 999999)}",
-            amount=total_price,
-            payment_method=payment_method,
-            status="Pending" if payment_method == "Credit Card" else "Completed",
-        )
-
-        # Clear cart after order placement
-        cart_items.delete()
-
-        messages.success(request, "Your order has been placed successfully!")
-        return redirect('order_success', order_id=order.order_id)
-
-    return redirect('checkout')
-
-@login_required(login_url='login')
-def order_success(request, order_id):
-    order = Order.objects.get(order_id=order_id, user=request.user)
-    return render(request, 'store/order_success.html', {'order': order})
+@login_required
+def dislike_review(request, review_id):
+    review = get_object_or_404(ReviewRating, id=review_id)
+    review.dislikes += 1
+    review.save()
+    return JsonResponse({'dislikes': review.dislikes})

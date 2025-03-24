@@ -10,4 +10,6 @@ urlpatterns = [
     path("activation-pending/", lambda request: render(request, "accounts/activation_pending.html"), name="activation_pending"),
     path('forgot-password/', views.forgot_password, name='forgot_password'),
     path('reset-password/<uidb64>/<token>/', views.reset_password, name='reset_password'),
+    path('profile/edit/', views.profile_edit, name='profile_edit'),
+    path('change-password/', views.password_change, name='password_change'),
 ]

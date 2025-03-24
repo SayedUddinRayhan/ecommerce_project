@@ -19,12 +19,15 @@ from django.urls import path, include
 from . import views
 from django.conf.urls.static import static
 from django.conf import settings
+from accounts.views import fake_admin_login
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
+    path('admin/', fake_admin_login, name='fake_admin'),
+    path('secure-admin/', admin.site.urls),
     path('', views.home, name='home'),
     path('store/', include('store.urls'), name='store'),
     path('cart/', include('cart.urls'), name='cart'),
     path('accounts/', include('accounts.urls'), name='accounts'),
+    path('order/', include('order.urls'), name='order'),
 
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

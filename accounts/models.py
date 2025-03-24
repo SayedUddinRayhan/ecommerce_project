@@ -1,5 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
+from django.utils.timezone import now
 # Create your models here.
 
 # Custom User Manager
@@ -70,8 +71,29 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
     def __str__(self):
         return self.username
 
+    def full_name(self):
+        return f'{self.first_name} {self.last_name}'
+
     def has_perm(self, perm, obj = None):
         return self.is_admin
 
     def has_module_perms(self, app_label):
         return True
+
+
+
+class AdminLoginAttempt(models.Model):
+    STATUS_CHOICES = [
+        ("SUCCESS", "Success"),
+        ("FAILED", "Failed"),
+        ("HONEYPOT", "Honeypot"),
+
+    ]
+
+    username = models.CharField(max_length=150)
+    ip_address = models.GenericIPAddressField()
+    timestamp = models.DateTimeField(default=now)
+    status = models.CharField(max_length=10, choices=STATUS_CHOICES)
+
+    def __str__(self):
+        return f"{self.username} - {self.status} - {self.ip_address}"

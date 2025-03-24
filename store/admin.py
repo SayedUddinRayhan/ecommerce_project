@@ -1,6 +1,12 @@
 from django.contrib import admin
-from .models import Product, Variation
-from .models import Order, OrderItem, OrderTransaction
+from .models import Product, Variation, ReviewRating, ProductGallery
+
+import admin_thumbnails
+
+@admin_thumbnails.thumbnail('image')
+class ProductGalleryInline(admin.TabularInline):
+    model = ProductGallery
+    extra = 1
 
 @admin.register(Product)
 class ProductAdmin(admin.ModelAdmin):
@@ -8,6 +14,7 @@ class ProductAdmin(admin.ModelAdmin):
     list_filter = ('category', 'created_at')
     search_fields = ('name', 'category_name')
     prepopulated_fields = {'slug': ('product_name',)}
+    inlines = [ProductGalleryInline]
 
 @admin.register(Variation)
 class VariationAdmin(admin.ModelAdmin):
@@ -17,21 +24,10 @@ class VariationAdmin(admin.ModelAdmin):
     search_fields = ('product__product_name', 'variation_value')
 
 
+@admin.register(ReviewRating)
+class ReviewRatingAdmin(admin.ModelAdmin):
+    list_display = ('user', 'product', 'rating', 'review', 'created_at', 'updated_at')
+    list_filter = ('user', 'rating', 'created_at')
+    search_fields = ('user__username', 'product__product_name')
 
-@admin.register(Order)
-class OrderAdmin(admin.ModelAdmin):
-    list_display = ('order_id', 'user', 'total_amount', 'status', 'created_at')
-    list_filter = ('status', 'created_at')
-    search_fields = ('order_id', 'user__username')
-
-@admin.register(OrderItem)
-class OrderItemAdmin(admin.ModelAdmin):
-    list_display = ('order', 'product', 'variation', 'quantity', 'price', 'total_price')
-    list_filter = ('order', 'product')
-    search_fields = ('order__order_id', 'product__product_name')
-
-@admin.register(OrderTransaction)
-class OrderTransactionAdmin(admin.ModelAdmin):
-    list_display = ('order', 'transaction_id', 'amount', 'payment_method', 'status', 'created_at')
-    list_filter = ('status', 'created_at')
-    search_fields = ('transaction_id', 'order__order_id')
+admin.site.register(ProductGallery)

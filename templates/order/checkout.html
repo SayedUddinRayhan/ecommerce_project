@@ -1,0 +1,96 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<section class="section-content py-5" style="background: linear-gradient(to right, #f8f9fa, #e9ecef);">
+    <div class="container">
+        <main class="col-md-9 mx-auto">
+            <article class="card shadow-lg border-0 rounded-4">
+                <!-- Header -->
+                <header class="card-header text-center text-white" style="background: linear-gradient(to right, #007bff, #6610f2); border-top-left-radius: 15px; border-top-right-radius: 15px;">
+                    <h3 class="mb-0 fw-bold">🔒 Secure Checkout</h3>
+                </header>
+
+                <div class="card-body p-4">
+                    <div class="row">
+                        <!-- Shipping Details -->
+                        <div class="col-md-6">
+                            <h5 class="mb-4 text-primary"><i class="fas fa-map-marker-alt"></i> Shipping Information</h5>
+                            <form method="POST" action="{% url 'place_order' %}">
+                                {% csrf_token %}
+                                <div class="mb-3">
+                                    <label for="shipping_address" class="fw-bold"> Full Address</label>
+                                    <textarea class="form-control shadow-sm" id="shipping_address" name="shipping_address" rows="3" placeholder="Enter your complete address" required></textarea>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="phone_number" class="fw-bold">📞 Phone Number</label>
+                                    <input type="text" class="form-control shadow-sm" id="phone_number" name="phone_number" placeholder="Enter your contact number" required>
+                                </div>
+                                <div class="mb-4">
+                                    <label for="payment_method" class="fw-bold">💳 Payment Method</label>
+                                    <select class="form-control shadow-sm" id="payment_method" name="payment_method">
+                                        <option value="Credit Card">💳 Credit Card</option>
+                                        <option value="Cash On Delivery">💰 Cash On Delivery</option>
+                                    </select>
+                                </div>
+                                <button type="submit" class="btn btn-lg btn-success w-100 shadow-sm fw-bold">
+                                    <i class="fas fa-lock"></i> Place Order Securely
+                                </button>
+                            </form>
+                        </div>
+
+                       <!-- Order Summary -->
+                        <div class="col-md-6">
+                            <h5 class="mb-4 text-primary"><i class="fas fa-shopping-cart"></i> Order Summary</h5>
+                            <ul class="list-group shadow-sm rounded">
+                                {% for item in cart_items %}
+                                    <li class="list-group-item">
+                                        <div class="d-flex justify-content-between">
+                                            <div>
+                                                <!-- Ensure that item.product is correctly referenced -->
+                                                <h6 class="fw-semibold">{{ item.product.product_name }}</h6>
+                                                <small class="text-muted">Qty: {{ item.quantity }}</small>
+
+                                                <!-- Show variations if available -->
+                                                {% if item.variations.all %}
+                                                    <ul class="mt-1 ps-3 text-muted small">
+                                                        {% for variation in item.variations.all %}
+                                                            <li><strong>{{ variation.variation_category }}</strong>: {{ variation.variation_value }}</li>
+                                                        {% endfor %}
+                                                    </ul>
+                                                {% endif %}
+                                            </div>
+
+                                            <!-- Show total price per item -->
+                                            <span class="text-dark fw-bold">Tk. {{ item.product.price|floatformat:2 }} x {{ item.quantity }} = Tk. {{ item.total_price|floatformat:2 }}</span>
+                                        </div>
+                                    </li>
+                                {% empty %}
+                                    <li class="list-group-item text-center text-danger">No items in cart!</li>
+                                {% endfor %}
+                                <li class="list-group-item d-flex justify-content-between">
+                                    <strong>Subtotal:</strong>
+                                    <span class="fw-bold">Tk. {{ total_price|floatformat:2 }}</span>
+                                </li>
+                                <li class="list-group-item d-flex justify-content-between">
+                                    <strong>Tax (2%):</strong>
+                                    <span class="fw-bold text-danger">Tk. {{ tax|floatformat:2 }}</span>
+                                </li>
+                                <li class="list-group-item d-flex justify-content-between bg-light">
+                                    <strong class="fs-5 text-primary">Grand Total:</strong>
+                                    <strong class="fs-5 text-success">Tk. {{ grand_total|floatformat:2 }}</strong>
+                                </li>
+                            </ul>
+
+                            <!-- Security Assurance Message -->
+                            <div class="alert alert-info text-center mt-4 shadow-sm">
+                                <i class="fas fa-shield-alt text-primary"></i> Your payment is secured with end-to-end encryption.
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </article>
+        </main>
+    </div>
+</section>
+{% endblock %}

@@ -1,0 +1,111 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+
+<div class="container" style="margin: 0 auto; width: 60%; padding: 50px; background: #f1f1f1; margin-top: 50px; margin-bottom: 50px;">
+    <h2 class="text-center">Order Details</h2>
+    <p class="text-center text-muted">Review your order and download the invoice.</p>
+
+    <div class="text-center mb-4">
+        <a href="{% url 'orders' %}" class="btn btn-secondary">Back to My Orders</a>
+    </div>
+
+    <div class="row invoice row-printable" id="invoice-section">
+        <div class="col-md-12">
+            <div class="panel panel-default plain">
+                <div class="panel-body p30">
+                    <div class="row">
+                        <div class="col-lg-6">
+                            <div class="invoice-logo">
+                                <img src="{% static 'images/logo.png' %}" alt="Invoice Logo" style="max-height: 40px;">
+                            </div>
+                        </div>
+                        <div class="col-lg-6 text-right">
+                            <div class="invoice-from">
+                                <ul class="list-unstyled">
+                                    <li><strong>Invoiced To</strong></li>
+                                    <li>{{ order.user.username }}</li>
+                                    <li>{{ order.shipping_address }}</li>
+                                    <li>Phone: {{ order.phone_number }}</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="invoice-details mt25">
+                        <div class="well">
+                            <ul class="list-unstyled mb0">
+                                <li><strong>Order ID:</strong> {{ order.order_id }}</li>
+                                <li><strong>Transaction ID:</strong>
+                                    {% if order.transactions.exists %}
+                                        {{ order.transactions.first.transaction_id }}
+                                    {% else %}
+                                        N/A
+                                    {% endif %}
+                                </li>
+                                <li><strong>Order Date:</strong> {{ order.created_at|date:"F j, Y" }}</li>
+                                <li><strong>Status:</strong> <span class="badge bg-primary">{{ order.status }}</span></li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="invoice-items">
+                        <div class="table-responsive">
+                            <table class="table table-bordered">
+                                <thead>
+                                    <tr>
+                                        <th class="per50 text-center">Product</th>
+                                        <th class="per20 text-center">Variation</th>
+                                        <th class="per15 text-center">Qty</th>
+                                        <th class="per15 text-center">Total (Tk)</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for item in order_items %}
+                                        <tr>
+                                            <td>{{ item.product.product_name }}</td>
+                                            <td class="text-center">
+                                                {% for variation in item.variations.all %}
+                                                    {{ variation.variation_category }}: {{ variation.variation_value }}{% if not forloop.last %}, {% endif %}
+                                                {% empty %}
+                                                    N/A
+                                                {% endfor %}
+                                            </td>
+                                            <td class="text-center">{{ item.quantity }}</td>
+                                            <td class="text-center">Tk {{ item.price|floatformat:2 }}</td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                                <tfoot>
+                                    <tr>
+                                        <th colspan="3" class="text-right">Subtotal:</th>
+                                        <th class="text-center">Tk {{ order.total_amount|floatformat:2 }}</th>
+                                    </tr>
+                                    <tr>
+                                        <th colspan="3" class="text-right">Tax (2%):</th>
+                                        <th class="text-center">Tk {{ tax_amount|floatformat:2 }}</th>
+                                    </tr>
+                                    <tr>
+                                        <th colspan="3" class="text-right">Grand Total:</th>
+                                        <th class="text-center">Tk {{ grand_total|floatformat:2 }}</th>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="invoice-footer mt25">
+                        <p class="text-center">Thank you for shopping with us!</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="text-center mt-4">
+        <button onclick="window.print()" class="btn btn-primary">Print Invoice</button>
+    </div>
+</div>
+
+{% endblock %}

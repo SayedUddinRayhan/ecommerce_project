@@ -1,18 +1,16 @@
-from django.http import HttpResponse
 from django.shortcuts import render, redirect, get_object_or_404
-from store.models import Product, Variation, Order, OrderItem
+from order.models import Product, Variation
 from .models import Cart, CartItem
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
-from django.utils import timezone
+
 
 
 
 def _cart_id(request):
-    cart = request.session.session_key
-    if not cart:
-        cart = request.session.create()
-    return cart
+    if not request.session.session_key:
+        request.session.create()
+    return request.session.session_key
 
 
 def add_cart(request, product_id):
@@ -48,11 +46,12 @@ def add_cart(request, product_id):
         existing_cart_item.save()
     else:
         cart_item = CartItem.objects.create(
-            product=product,
-            quantity=1,
-            user=request.user if request.user.is_authenticated else None,
-            cart=None if request.user.is_authenticated else cart
+        product=product,
+        quantity=1,
+        user=request.user if request.user.is_authenticated else None,
+        cart=cart if not request.user.is_authenticated else None  # Assign cart for guest users
         )
+
         cart_item.variations.set(product_variation)
         cart_item.save()
 
@@ -101,8 +100,10 @@ def cart(request):
     else:
         cart = Cart.objects.filter(cart_id=_cart_id(request)).first()
         cart_items = CartItem.objects.filter(cart=cart, is_active=True) if cart else []
+        if request.user.is_authenticated:
+            cart_items = CartItem.objects.filter(user=request.user, is_active=True)  # Ensure logged-in user sees their items
 
-    print("Cart Items:", list(cart_items))  # Debugging print statement
+
 
     for cart_item in cart_items:
         print(f"Product: {cart_item.product}, Quantity: {cart_item.quantity}, Variations: {list(cart_item.variations.all())}")  # Print cart item details
@@ -122,44 +123,3 @@ def cart(request):
     return render(request, 'store/cart.html', context)
 
 
-@login_required
-def checkout(request):
-
-    cart_items = CartItem.objects.filter(user=request.user, is_active=True)
-    if not cart_items.exists():
-        messages.error(request, "Your cart is empty.")
-        return redirect('store')
-
-    total_price = sum(item.product.price * item.quantity for item in cart_items)
-
-    if request.method == "POST":
-        shipping_address = request.POST.get('shipping_address')
-        phone_number = request.POST.get('phone_number')
-        payment_method = request.POST.get('payment_method')
-
-        if not shipping_address or not phone_number:
-            messages.error(request, "Please provide both shipping address and phone number.")
-            return redirect('checkout')
-
-        order = Order.objects.create(
-            user=request.user,
-            total_amount=total_price,
-            shipping_address=shipping_address,
-            phone_number=phone_number,
-            status='pending',
-            order_id=f"{timezone.now().strftime('%Y%m%d%H%M%S')}_{request.user.id}",
-        )
-
-        for cart_item in cart_items:
-            OrderItem.objects.create(
-                order=order,
-                product=cart_item.product,
-                quantity=cart_item.quantity,
-                price=cart_item.product.price,
-            )
-
-        cart_items.delete()
-        messages.success(request, "Your order has been placed successfully!")
-        return redirect('order_detail', order_id=order.order_id)
-
-    return render(request, 'store/checkout.html', {'cart_items': cart_items, 'total_price': total_price})
