@@ -2,7 +2,7 @@
 .env
 
 # ecommerce_project/settings.py
-ecommerce_project/static/
+# ecommerce_project/static/
 
 # Ignore the ecommerce_template folder
 ecommerce_template/
@@ -20,8 +20,8 @@ __pycache__/
 db.sqlite3
 
 # Django static and media files
-/static/
-/media/
+# /static/
+# /media/
 
 # Logs and temporary files
 *.log
